@@ -1,105 +1,91 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useContext, useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import { NameContext } from '../App';
-
-const API_URL = 'https://6700d49d4da5bd237554e76b.mockapi.io/todoList';
+import { useDispatch } from 'react-redux';
+import { addItemRequest } from '../redux/actions';
 
 export default function Screen3({ navigation, route }) {
-  const { name } = useContext(NameContext);
-  const [newTask, setNewTask] = useState('');
-  const isEditMode = route.params?.task !== undefined;
+    const { name } = useContext(NameContext);
+    const [newTask, setNewTask] = useState('');
+    const dispatch = useDispatch();
+    
+    const isEditMode = route.params && route.params.task !== undefined;
 
-  const handleTaskSubmit = async () => {
-    const method = isEditMode ? 'PUT' : 'POST';
-    const url = isEditMode ? `${API_URL}/${route.params.task.id}` : API_URL;
+    const handleTaskSubmit = () => {
+        if (newTask.trim() === '') {
+            alert('Please enter a task.');
+            return;
+        }
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json', 
-      },
-      body: JSON.stringify({
-        title: newTask,
-      }),
-    });
+        if (isEditMode) {
+            dispatch(addItemRequest({ id: route.params.task.id, title: newTask })); 
+        } else {
+            dispatch(addItemRequest(newTask));
+        }
 
-    await response.json();
-    route.params.fetchItems();
-    navigation.goBack();
-  };
+        setNewTask('');
+        navigation.goBack();
+    };
 
-  useEffect(() => {
-    if (isEditMode) {
-      setNewTask(route.params.task.title);
-    }
-  }, [isEditMode, route.params.task]);
+    useEffect(() => {
+        if (isEditMode) {
+            setNewTask(route.params.task.title);
+        }
+    }, [isEditMode, route.params]);
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image source={require('../assets/IconButton12.png')} style={{ marginTop: 10 }} />
-        </TouchableOpacity>
-        <Text style={styles.greeting}>Hi {name}</Text>
-      </View>
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 25 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginTop: 10, flex: 1 }}>
+                    <Image source={require('../assets/Rectangle.png')} style={{ borderRadius: 25, backgroundColor: '#D9CBF6' }} />
+                    <View>
+                        <Text style={{ fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>Hi {name}</Text>
+                        <Text style={{ color: '#9095A0', fontWeight: 'bold' }}>Have a great day ahead</Text>
+                    </View>
+                </View>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Image source={require('../assets/IconButton12.png')} style={{ marginTop: 10 }} />
+                </TouchableOpacity>
+            </View>
 
-      <Text style={styles.title}>{isEditMode ? 'EDIT YOUR JOB' : 'ADD YOUR JOB'}</Text>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 30, fontWeight: 'bold' }}>{isEditMode ? 'EDIT YOUR JOB' : 'ADD YOUR JOB'}</Text>
+            </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your job"
-        value={newTask}
-        onChangeText={setNewTask}
-      />
-      
-      <TouchableOpacity style={styles.submitButton} onPress={handleTaskSubmit}>
-        <Text style={styles.submitButtonText}>{isEditMode ? 'Update' : 'Add'}</Text>
-      </TouchableOpacity>
-    </View>
-  );
+            <View style={{ flex: 3, alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', borderWidth: 1, padding: 10, borderRadius: 8, backgroundColor: 'white', width: '90%' }}>
+                    <Image source={require('../assets/Framtask.png')} />
+                    <TextInput
+                        style={{ width: '80%', marginLeft: 10 }}
+                        placeholder="Enter your job"
+                        value={newTask}
+                        onChangeText={setNewTask}
+                    />
+                </View>
+                <TouchableOpacity style={styles.submitButton} onPress={handleTaskSubmit}>
+                    <Text style={styles.submitButtonText}>{isEditMode ? 'Update' : 'Add'}</Text>
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 25,
-  },
-  greeting: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginVertical: 20,
-  },
-  input: {
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: 'white',
-    width: '90%',
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  submitButton: {
-    backgroundColor: '#2D5BFF',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-    width: '90%',
-    alignSelf: 'center',
-  },
-  submitButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    submitButton: {
+        backgroundColor: '#2D5BFF',
+        padding: 15,
+        borderRadius: 5,
+        marginTop: 10,
+        width: '90%',
+        alignItems: 'center',
+    },
+    submitButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 18,
+    },
 });
