@@ -1,44 +1,29 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchItemsRequest, deleteItemRequest } from '../redux/actions';
 import { NameContext } from '../App';
-import axios from 'axios';
-
-const API_URL = 'https://6700d49d4da5bd237554e76b.mockapi.io/todoList';
 
 export default function Screen2({ navigation }) {
-  const { name } = useContext(NameContext);
-  const [tasks, setTasks] = useState([]);
+  const { name } = React.useContext(NameContext);
+  const dispatch = useDispatch();
+  const { items, loading } = useSelector(state => state); 
   const [searchText, setSearchText] = useState('');
 
-  const fetchItems = async () => {
-    try {
-      const response = await axios.get(API_URL);
-      setTasks(response.data);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    }
-  };
-
   useEffect(() => {
-    fetchItems();
-  }, []);
+    dispatch(fetchItemsRequest()); 
+  }, [dispatch]);
 
-  const deleteTask = async (id) => {
+  const deleteTask = (id) => {
     const confirmDelete = window.confirm('Are you sure you want to delete?');
     if (confirmDelete) {
-      try {
-        await axios.delete(`${API_URL}/${id}`);
-        fetchItems();
-      } catch (error) {
-        alert('Failed to delete task. Please try again.');
-      }
+      dispatch(deleteItemRequest(id));
     }
   };
 
- const filteredTasks = tasks.filter(item =>
-  typeof item.title === 'string' && item.title.toLowerCase().includes(searchText.toLowerCase())
-);
-
+  const filteredTasks = items.filter(item =>
+    typeof item.title === 'string' && item.title.toLowerCase().includes(searchText.toLowerCase())
+  );
 
   return (
     <View style={styles.container}>
@@ -67,20 +52,22 @@ export default function Screen2({ navigation }) {
               <Image source={require('../assets/tick.png')} />
             </TouchableOpacity>
             <Text style={styles.taskText}>{item.title}</Text>
-            <View style={{flexDirection:'row',justifyContent:'flex-end', alignItems:'center'}}>
-            <TouchableOpacity onPress={() => navigation.navigate('screen3', { task: item, fetchItems })} style={{marginHorizontal:8}}>
-              <Image source={require('../assets/pencil.png')} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => deleteTask(item.id)} >
-              <Image source={require('../assets/bin.png')} style={{width:30, height:30}} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <TouchableOpacity onPress={() => navigation.navigate('screen3', { task: item })} style={{ marginHorizontal: 8 }}>
+                <Image source={require('../assets/pencil.png')} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => deleteTask(item.id)}>
+                <Image source={require('../assets/bin.png')} style={{ width: 30, height: 30 }} />
+              </TouchableOpacity>
             </View>
           </View>
         )}
         keyExtractor={item => item.id.toString()}
+        refreshing={loading} // Hiển thị trạng thái loading
+        onRefresh={() => dispatch(fetchItemsRequest())} // Cập nhật lại khi kéo xuống
       />
 
-      <TouchableOpacity onPress={() => navigation.navigate('screen3', { fetchItems })} style={{alignItems:'center'}}>
+      <TouchableOpacity onPress={() => navigation.navigate('screen3')} style={{ alignItems: 'center' }}>
         <Image source={require('../assets/Group13.png')} />
       </TouchableOpacity>
     </View>
